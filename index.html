@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Focus & Flow — Sonidos ambiente + Pomodoro</title>
+  <meta name="description" content="Sonidos de ambiente y temporizador Pomodoro para trabajar con más foco. Lluvia, café, bosque y brown noise. Pago único, sin suscripción." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f4f0;
+      --text: #1a1a1a;
+      --text2: #666660;
+      --text3: #aaa89f;
+      --border: rgba(0,0,0,0.1);
+      --border2: rgba(0,0,0,0.18);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1a1a18;
+        --bg2: #242420;
+        --text: #f0ede6;
+        --text2: #999690;
+        --text3: #555350;
+        --border: rgba(255,255,255,0.1);
+        --border2: rgba(255,255,255,0.18);
+      }
+    }
+
+    body {
+      font-family: 'DM Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    .app { width: 100%; max-width: 460px; }
+
+    .app-title {
+      font-family: 'Fraunces', serif;
+      font-size: 32px;
+      font-weight: 300;
+      font-style: italic;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+
+    .app-sub {
+      font-size: 11px;
+      color: var(--text3);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 2.5rem;
+    }
+
+    .section-label {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 0.75rem;
+    }
+
+    .sounds-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+
+    .sound-card {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      position: relative;
+      user-select: none;
+    }
+
+    .sound-card:hover { border-color: var(--border2); }
+    .sound-card.active { background: var(--bg); border-color: var(--border2); }
+
+    .sound-indicator {
+      position: absolute;
+      top: 10px; right: 10px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--text);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .sound-card.active .sound-indicator {
+      opacity: 1;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.35; transform: scale(0.75); }
+    }
+
+    .sound-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+    .sound-name { font-size: 12px; font-weight: 500; color: var(--text); display: block; margin-bottom: 3px; }
+    .sound-desc { font-size: 10px; color: var(--text3); display: block; line-height: 1.4; }
+
+    .volume-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 2rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    .vol-label { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); min-width: 52px; }
+    .vol-val { font-size: 11px; color: var(--text2); min-width: 28px; text-align: right; }
+
+    input[type=range] {
+      flex: 1;
+      -webkit-appearance: none;
+      height: 4px;
+      background: var(--border2);
+      border-radius: 2px;
+      outline: none;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: var(--text);
+      cursor: pointer;
+    }
+
+    .pomodoro-card {
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .mode-tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+
+    .mode-tab {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 5px 12px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border);
+      background: transparent;
+      color: var(--text3);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .mode-tab.active { background: var(--bg); border-color: var(--border2); color: var(--text); }
+
+    .progress-bar-wrap {
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-bottom: 1.25rem;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--text);
+      border-radius: 2px;
+      transition: width 1s linear;
+    }
+
+    .timer-display {
+      font-family: 'Fraunces', serif;
+      font-size: 56px;
+      font-weight: 300;
+      font-style: italic;
+      color: var(--text);
+      letter-spacing: -1px;
+      line-height: 1;
+      margin-bottom: 6px;
+    }
+
+    .timer-mode {
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text3);
+      margin-bottom: 1.25rem;
+    }
+
+    .timer-mode span { color: var(--text2); }
+
+    .timer-controls { display: flex; gap: 8px; justify-content: center; margin-bottom: 1.25rem; }
+
+    .btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 8px 18px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border2);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.12s;
+    }
+
+    .btn:hover { background: var(--bg); }
+    .btn:active { transform: scale(0.98); }
+
+    .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .btn-primary:hover { opacity: 0.85; background: var(--text); }
+
+    .session-dots { display: flex; justify-content: center; gap: 6px; }
+
+    .dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--border2);
+      transition: background 0.2s;
+    }
+
+    .dot.done { background: var(--text); }
+
+    .status-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.6rem 0;
+      border-top: 0.5px solid var(--border);
+      font-size: 10px;
+      color: var(--text3);
+      letter-spacing: 0.08em;
+    }
+
+    .status-dot {
+      display: inline-block;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--border2);
+      margin-right: 5px;
+      vertical-align: middle;
+    }
+
+    .status-dot.on { background: #4ade80; animation: pulse 1.4s ease-in-out infinite; }
+
+    .loading-bar {
+      height: 2px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-bottom: 0.5rem;
+      overflow: hidden;
+      display: none;
+    }
+
+    .loading-bar.visible { display: block; }
+
+    .loading-fill {
+      height: 100%;
+      background: var(--text3);
+      border-radius: 2px;
+      animation: loading 1.2s ease-in-out infinite alternate;
+    }
+
+    @keyframes loading {
+      from { width: 20%; }
+      to { width: 90%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="app-title">Focus &amp; Flow</div>
+    <div class="app-sub">Sonidos ambiente · Pomodoro</div>
+
+    <div class="section-label">Ambiente</div>
+    <div class="loading-bar" id="loadingBar"><div class="loading-fill"></div></div>
+    <div class="sounds-grid">
+      <div class="sound-card" data-sound="rain" onclick="toggleSound('rain')">
+        <span class="sound-indicator"></span>
+        <span class="sound-icon">🌧</span>
+        <span class="sound-name">Lluvia</span>
+        <span class="sound-desc">Lluvia suave sobre ventana</span>
+      </div>
+      <div class="sound-card" data-sound="cafe" onclick="toggleSound('cafe')">
+        <span class="sound-indicator"></span>
+        <span class="sound-icon">☕</span>
+        <span class="sound-name">Café</span>
+        <span class="sound-desc">Murmullo de cafetería</span>
+      </div>
+      <div class="sound-card" data-sound="forest" onclick="toggleSound('forest')">
+        <span class="sound-indicator"></span>
+        <span class="sound-icon">🌿</span>
+        <span class="sound-name">Bosque</span>
+        <span class="sound-desc">Pájaros y brisa natural</span>
+      </div>
+      <div class="sound-card" data-sound="noise" onclick="toggleSound('noise')">
+        <span class="sound-indicator"></span>
+        <span class="sound-icon">〰</span>
+        <span class="sound-name">Brown noise</span>
+        <span class="sound-desc">Ruido profundo constante</span>
+      </div>
+    </div>
+
+    <div class="volume-row">
+      <span class="vol-label">Volumen</span>
+      <input type="range" min="0" max="100" value="60" id="volSlider" oninput="setVolume(this.value)" />
+      <span class="vol-val" id="volVal">60</span>
+    </div>
+
+    <div class="section-label">Pomodoro</div>
+    <div class="pomodoro-card">
+      <div class="mode-tabs">
+        <button class="mode-tab active" onclick="setMode('focus', this)">Foco · 25m</button>
+        <button class="mode-tab" onclick="setMode('short', this)">Pausa · 5m</button>
+        <button class="mode-tab" onclick="setMode('long', this)">Pausa larga · 15m</button>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="progressBar" style="width:100%"></div>
+      </div>
+      <div class="timer-display" id="timerDisplay">25:00</div>
+      <div class="timer-mode">Modo: <span id="modeLabel">Foco</span></div>
+      <div class="timer-controls">
+        <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">Iniciar</button>
+        <button class="btn" onclick="resetTimer()">Reset</button>
+      </div>
+      <div class="session-dots">
+        <div class="dot" id="d0"></div>
+        <div class="dot" id="d1"></div>
+        <div class="dot" id="d2"></div>
+        <div class="dot" id="d3"></div>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div>
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Sin sonido activo</span>
+      </div>
+      <div id="sessionCount">Sesión 1 de 4</div>
+    </div>
+  </div>
+
+  <script>
+    const MODES = {
+      focus: { label: 'Foco', seconds: 25 * 60 },
+      short: { label: 'Pausa corta', seconds: 5 * 60 },
+      long:  { label: 'Pausa larga', seconds: 15 * 60 }
+    };
+
+    const SOUND_FILES = {
+      rain:   'sounds/rain.mp3',
+      cafe:   'sounds/cafe.mp3',
+      forest: 'sounds/forest.mp3',
+      noise:  'sounds/noise.mp3'
+    };
+
+    let currentMode = 'focus';
+    let totalSeconds = MODES.focus.seconds;
+    let remaining = totalSeconds;
+    let running = false;
+    let interval = null;
+    let sessionsCompleted = 0;
+    let activeSound = null;
+    let volume = 0.6;
+    let currentAudio = null;
+
+    function showLoading(show) {
+      document.getElementById('loadingBar').classList.toggle('visible', show);
+    }
+
+    function toggleSound(name) {
+      if (activeSound === name) { stopSound(); return; }
+      stopSound();
+      showLoading(true);
+
+      const audio = new Audio(SOUND_FILES[name]);
+      audio.loop = true;
+      audio.volume = volume;
+
+      audio.addEventListener('canplaythrough', () => {
+        showLoading(false);
+        audio.play().catch(() => showLoading(false));
+      }, { once: true });
+
+      audio.addEventListener('error', () => {
+        showLoading(false);
+        alert('No se pudo cargar el sonido. Verifica que el archivo existe en sounds/' + name + '.mp3');
+      }, { once: true });
+
+      audio.load();
+      currentAudio = audio;
+      activeSound = name;
+
+      document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('active'));
+      document.querySelector(`[data-sound="${name}"]`).classList.add('active');
+      updateStatusBar();
+    }
+
+    function stopSound() {
+      if (currentAudio) {
+        currentAudio.pause();
+        currentAudio.currentTime = 0;
+        currentAudio = null;
+      }
+      activeSound = null;
+      document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('active'));
+      updateStatusBar();
+    }
+
+    function setVolume(val) {
+      volume = val / 100;
+      document.getElementById('volVal').textContent = val;
+      if (currentAudio) currentAudio.volume = volume;
+    }
+
+    function updateStatusBar() {
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('statusText');
+      const names = { rain: 'Lluvia', cafe: 'Café', forest: 'Bosque', noise: 'Brown noise' };
+      if (activeSound) {
+        dot.classList.add('on');
+        text.textContent = names[activeSound] + ' activo';
+      } else {
+        dot.classList.remove('on');
+        text.textContent = 'Sin sonido activo';
+      }
+    }
+
+    function formatTime(s) {
+      return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    }
+
+    function updateDisplay() {
+      document.getElementById('timerDisplay').textContent = formatTime(remaining);
+      document.getElementById('progressBar').style.width = ((remaining / totalSeconds) * 100) + '%';
+    }
+
+    function setMode(mode, btn) {
+      if (running) return;
+      currentMode = mode;
+      totalSeconds = MODES[mode].seconds;
+      remaining = totalSeconds;
+      document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('modeLabel').textContent = MODES[mode].label;
+      updateDisplay();
+    }
+
+    function toggleTimer() {
+      if (running) {
+        clearInterval(interval); running = false;
+        document.getElementById('startBtn').textContent = 'Reanudar';
+      } else {
+        running = true;
+        document.getElementById('startBtn').textContent = 'Pausar';
+        interval = setInterval(() => {
+          remaining--;
+          updateDisplay();
+          if (remaining <= 0) {
+            clearInterval(interval); running = false;
+            document.getElementById('startBtn').textContent = 'Iniciar';
+            if (currentMode === 'focus') {
+              sessionsCompleted = Math.min(sessionsCompleted + 1, 4);
+              updateDots();
+            }
+            remaining = totalSeconds;
+            updateDisplay();
+          }
+        }, 1000);
+      }
+    }
+
+    function resetTimer() {
+      clearInterval(interval); running = false;
+      remaining = totalSeconds;
+      document.getElementById('startBtn').textContent = 'Iniciar';
+      updateDisplay();
+    }
+
+    function updateDots() {
+      for (let i = 0; i < 4; i++) {
+        document.getElementById('d' + i).classList.toggle('done', i < sessionsCompleted);
+      }
+      document.getElementById('sessionCount').textContent =
+        sessionsCompleted >= 4 ? 'Ciclo completo' : 'Sesión ' + (sessionsCompleted + 1) + ' de 4';
+      if (sessionsCompleted >= 4) sessionsCompleted = 0;
+    }
+  </script>
+</body>
+</html>
