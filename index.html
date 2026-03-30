@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Focus & Flow — Sonidos ambiente + Pomodoro</title>
-  <meta name="description" content="Sonidos de ambiente y temporizador Pomodoro para trabajar con más foco. Lluvia, café, bosque y brown noise. Pago único, sin suscripción." />
+  <title>Focus & Flow — Sonidos ambiente</title>
+  <meta name="description" content="Sonidos de ambiente con temporizador de reproducción configurable. Lluvia, café, bosque y brown noise." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&display=swap" rel="stylesheet" />
@@ -73,6 +73,52 @@
       margin-bottom: 0.75rem;
     }
 
+    .flow-guide {
+      margin-bottom: 1.25rem;
+      padding: 0.9rem 1rem;
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+    }
+
+    .flow-steps {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 0.6rem;
+    }
+
+    .flow-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+
+    .flow-step::before {
+      content: '';
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--border2);
+      flex-shrink: 0;
+    }
+
+    .flow-step.done {
+      color: var(--text2);
+    }
+
+    .flow-step.done::before {
+      background: #4ade80;
+    }
+
+    .flow-tip {
+      font-size: 10px;
+      color: var(--text2);
+    }
+
     .sounds-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -94,6 +140,11 @@
     .sound-card:hover { border-color: var(--border2); }
     .sound-card.active { background: var(--bg); border-color: var(--border2); }
 
+    .sound-card.locked {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
     .sound-indicator {
       position: absolute;
       top: 10px; right: 10px;
@@ -114,9 +165,98 @@
       50% { opacity: 0.35; transform: scale(0.75); }
     }
 
-    .sound-icon { font-size: 22px; margin-bottom: 8px; display: block; }
+    .sound-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 0.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      margin-bottom: 10px;
+      background: var(--bg);
+    }
+
+    .sound-glyph {
+      font-size: 20px;
+      line-height: 1;
+      opacity: 0.2;
+    }
+
+    .sound-state {
+      position: absolute;
+      font-size: 20px;
+      line-height: 1;
+      color: var(--text);
+      transform: translateX(1px);
+      transition: transform 0.12s;
+    }
+
+    .sound-card.active .sound-state {
+      transform: translateX(0);
+    }
     .sound-name { font-size: 12px; font-weight: 500; color: var(--text); display: block; margin-bottom: 3px; }
     .sound-desc { font-size: 10px; color: var(--text3); display: block; line-height: 1.4; }
+
+    .duration-row {
+      margin-bottom: 1rem;
+      padding: 0.75rem 1rem;
+      background: var(--bg2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-md);
+    }
+
+    .duration-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.65rem;
+    }
+
+    .duration-label {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text3);
+    }
+
+    .duration-note {
+      font-size: 10px;
+      color: var(--text2);
+    }
+
+    .duration-options {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .duration-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      padding: 7px 6px;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border);
+      background: transparent;
+      color: var(--text2);
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+
+    .duration-btn.active {
+      background: var(--bg);
+      border-color: var(--border2);
+      color: var(--text);
+    }
+
+    @media (max-width: 420px) {
+      .duration-options {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
 
     .volume-row {
       display: flex;
@@ -135,6 +275,7 @@
     input[type=range] {
       flex: 1;
       -webkit-appearance: none;
+      appearance: none;
       height: 4px;
       background: var(--border2);
       border-radius: 2px;
@@ -149,38 +290,34 @@
       cursor: pointer;
     }
 
-    .pomodoro-card {
+    .sound-timer-card {
       background: var(--bg2);
       border: 0.5px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      margin-bottom: 2rem;
-      text-align: center;
+      padding: 0.85rem 0.95rem;
+      margin-bottom: 1.1rem;
     }
 
-    .mode-tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .sound-timer-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 0.45rem;
+    }
 
-    .mode-tab {
-      font-family: 'DM Mono', monospace;
-      font-size: 10px;
-      letter-spacing: 0.1em;
+    .timer-kicker {
+      font-size: 9px;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      padding: 5px 12px;
-      border-radius: var(--radius-md);
-      border: 0.5px solid var(--border);
-      background: transparent;
       color: var(--text3);
-      cursor: pointer;
-      transition: all 0.12s;
+      margin-bottom: 0.15rem;
     }
-
-    .mode-tab.active { background: var(--bg); border-color: var(--border2); color: var(--text); }
 
     .progress-bar-wrap {
       height: 2px;
       background: var(--border);
       border-radius: 2px;
-      margin-bottom: 1.25rem;
+      margin-bottom: 0.6rem;
       overflow: hidden;
     }
 
@@ -191,64 +328,38 @@
       transition: width 1s linear;
     }
 
-    .timer-display {
+    .timer-value {
       font-family: 'Fraunces', serif;
-      font-size: 56px;
+      font-size: 28px;
       font-weight: 300;
       font-style: italic;
       color: var(--text);
-      letter-spacing: -1px;
+      letter-spacing: -0.8px;
       line-height: 1;
-      margin-bottom: 6px;
     }
 
-    .timer-mode {
-      font-size: 10px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--text3);
-      margin-bottom: 1.25rem;
-    }
-
-    .timer-mode span { color: var(--text2); }
-
-    .timer-controls { display: flex; gap: 8px; justify-content: center; margin-bottom: 1.25rem; }
-
-    .btn {
-      font-family: 'DM Mono', monospace;
-      font-size: 11px;
+    .timer-hint {
+      font-size: 9px;
       letter-spacing: 0.08em;
+      color: var(--text3);
       text-transform: uppercase;
-      padding: 8px 18px;
-      border-radius: var(--radius-md);
-      border: 0.5px solid var(--border2);
-      background: transparent;
-      color: var(--text);
-      cursor: pointer;
-      transition: background 0.12s;
+      line-height: 1.35;
     }
 
-    .btn:hover { background: var(--bg); }
-    .btn:active { transform: scale(0.98); }
+    @media (max-width: 420px) {
+      .sound-timer-grid {
+        grid-template-columns: 1fr;
+      }
 
-    .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
-    .btn-primary:hover { opacity: 0.85; background: var(--text); }
-
-    .session-dots { display: flex; justify-content: center; gap: 6px; }
-
-    .dot {
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      background: var(--border2);
-      transition: background 0.2s;
+      .timer-value {
+        font-size: 24px;
+      }
     }
-
-    .dot.done { background: var(--text); }
 
     .status-bar {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       padding: 0.6rem 0;
       border-top: 0.5px solid var(--border);
       font-size: 10px;
@@ -294,33 +405,73 @@
 <body>
   <div class="app">
     <div class="app-title">Focus &amp; Flow</div>
-    <div class="app-sub">Sonidos ambiente · Pomodoro</div>
+    <div class="app-sub">Sonidos ambiente</div>
+
+    <div class="flow-guide" id="flowGuide">
+      <div class="flow-steps">
+        <div class="flow-step" id="stepDuration">Paso 1: Elige una duración</div>
+        <div class="flow-step" id="stepSound">Paso 2: Elige un sonido</div>
+        <div class="flow-step" id="stepVolume">Paso 3: Ajusta el volumen</div>
+      </div>
+      <div class="flow-tip" id="flowTip">Empieza por seleccionar 3 min, 10 min, 30 min o Ilimitado</div>
+    </div>
+
+    <div class="duration-row">
+      <div class="duration-head">
+        <span class="duration-label">Tiempo de sonido</span>
+        <span class="duration-note" id="durationNote">Obligatorio</span>
+      </div>
+      <div class="duration-options">
+        <button class="duration-btn" onclick="setSoundDuration('180', this)">3 min</button>
+        <button class="duration-btn" onclick="setSoundDuration('600', this)">10 min</button>
+        <button class="duration-btn" onclick="setSoundDuration('1800', this)">30 min</button>
+        <button class="duration-btn" onclick="setSoundDuration('unlimited', this)">Ilimitado</button>
+      </div>
+    </div>
+
+    <div class="section-label">Temporizador de sonido</div>
+    <div class="sound-timer-card">
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-fill" id="soundProgress" style="width:0%"></div>
+      </div>
+      <div class="sound-timer-grid">
+        <div>
+          <div class="timer-kicker">Transcurrido</div>
+          <div class="timer-value" id="elapsedDisplay">00:00</div>
+        </div>
+        <div>
+          <div class="timer-kicker">Restante</div>
+          <div class="timer-value" id="remainingDisplay">--:--</div>
+        </div>
+      </div>
+      <div class="timer-hint" id="timerHint">Selecciona una duración y activa un sonido</div>
+    </div>
 
     <div class="section-label">Ambiente</div>
     <div class="loading-bar" id="loadingBar"><div class="loading-fill"></div></div>
     <div class="sounds-grid">
       <div class="sound-card" data-sound="rain" onclick="toggleSound('rain')">
         <span class="sound-indicator"></span>
-        <span class="sound-icon">🌧</span>
+        <span class="sound-icon"><span class="sound-glyph">🌧</span><span class="sound-state">▶</span></span>
         <span class="sound-name">Lluvia</span>
         <span class="sound-desc">Lluvia suave sobre ventana</span>
       </div>
       <div class="sound-card" data-sound="cafe" onclick="toggleSound('cafe')">
         <span class="sound-indicator"></span>
-        <span class="sound-icon">☕</span>
+        <span class="sound-icon"><span class="sound-glyph">☕</span><span class="sound-state">▶</span></span>
         <span class="sound-name">Café</span>
         <span class="sound-desc">Murmullo de cafetería</span>
       </div>
       <div class="sound-card" data-sound="forest" onclick="toggleSound('forest')">
         <span class="sound-indicator"></span>
-        <span class="sound-icon">🌿</span>
+        <span class="sound-icon"><span class="sound-glyph">🌿</span><span class="sound-state">▶</span></span>
         <span class="sound-name">Bosque</span>
         <span class="sound-desc">Pájaros y brisa natural</span>
       </div>
       <div class="sound-card" data-sound="noise" onclick="toggleSound('noise')">
         <span class="sound-indicator"></span>
-        <span class="sound-icon">〰</span>
-        <span class="sound-name">Brown noise</span>
+        <span class="sound-icon"><span class="sound-glyph">〰</span><span class="sound-state">▶</span></span>
+        <span class="sound-name">White noise</span>
         <span class="sound-desc">Ruido profundo constante</span>
       </div>
     </div>
@@ -331,46 +482,15 @@
       <span class="vol-val" id="volVal">60</span>
     </div>
 
-    <div class="section-label">Pomodoro</div>
-    <div class="pomodoro-card">
-      <div class="mode-tabs">
-        <button class="mode-tab active" onclick="setMode('focus', this)">Foco · 25m</button>
-        <button class="mode-tab" onclick="setMode('short', this)">Pausa · 5m</button>
-        <button class="mode-tab" onclick="setMode('long', this)">Pausa larga · 15m</button>
-      </div>
-      <div class="progress-bar-wrap">
-        <div class="progress-bar-fill" id="progressBar" style="width:100%"></div>
-      </div>
-      <div class="timer-display" id="timerDisplay">25:00</div>
-      <div class="timer-mode">Modo: <span id="modeLabel">Foco</span></div>
-      <div class="timer-controls">
-        <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">Iniciar</button>
-        <button class="btn" onclick="resetTimer()">Reset</button>
-      </div>
-      <div class="session-dots">
-        <div class="dot" id="d0"></div>
-        <div class="dot" id="d1"></div>
-        <div class="dot" id="d2"></div>
-        <div class="dot" id="d3"></div>
-      </div>
-    </div>
-
     <div class="status-bar">
       <div>
         <span class="status-dot" id="statusDot"></span>
         <span id="statusText">Sin sonido activo</span>
       </div>
-      <div id="sessionCount">Sesión 1 de 4</div>
     </div>
   </div>
 
   <script>
-    const MODES = {
-      focus: { label: 'Foco', seconds: 25 * 60 },
-      short: { label: 'Pausa corta', seconds: 5 * 60 },
-      long:  { label: 'Pausa larga', seconds: 15 * 60 }
-    };
-
     const SOUND_FILES = {
       rain:   'sounds/rain.mp3',
       cafe:   'sounds/cafe.mp3',
@@ -378,22 +498,185 @@
       noise:  'sounds/noise.mp3'
     };
 
-    let currentMode = 'focus';
-    let totalSeconds = MODES.focus.seconds;
-    let remaining = totalSeconds;
-    let running = false;
-    let interval = null;
-    let sessionsCompleted = 0;
     let activeSound = null;
     let volume = 0.6;
     let currentAudio = null;
+    let selectedDuration = null;
+    let soundStartedAt = null;
+    let soundElapsedSeconds = 0;
+    let soundPaused = false;
+    let soundTimerInterval = null;
+
+    function updateSoundCardStates() {
+      document.querySelectorAll('.sound-card').forEach(card => {
+        const isActive = card.dataset.sound === activeSound;
+        const stateEl = card.querySelector('.sound-state');
+        card.classList.toggle('paused', isActive && soundPaused);
+        if (stateEl) {
+          stateEl.textContent = isActive && !soundPaused ? '⏸' : '▶';
+        }
+      });
+    }
+
+    function updateGuide() {
+      const durationDone = Boolean(selectedDuration);
+      const soundDone = Boolean(activeSound);
+      const stepDuration = document.getElementById('stepDuration');
+      const stepSound = document.getElementById('stepSound');
+      const stepVolume = document.getElementById('stepVolume');
+      const flowTip = document.getElementById('flowTip');
+
+      stepDuration.classList.toggle('done', durationDone);
+      stepSound.classList.toggle('done', soundDone);
+      stepVolume.classList.toggle('done', soundDone);
+
+      document.querySelectorAll('.sound-card').forEach(card => {
+        card.classList.toggle('locked', !durationDone);
+      });
+
+      if (!durationDone) {
+        flowTip.textContent = 'Empieza por seleccionar 3 min, 10 min, 30 min o Ilimitado';
+      } else if (!soundDone) {
+        flowTip.textContent = 'Ahora toca un sonido para comenzar la reproducción';
+      } else if (soundPaused) {
+        flowTip.textContent = 'Sonido en pausa. Toca el mismo sonido para reanudar';
+      } else {
+        flowTip.textContent = 'Todo listo. Puedes cambiar volumen o tocar el sonido activo para detenerlo, y ver el tiempo restante en el cronómetro más abajo';
+      }
+    }
 
     function showLoading(show) {
       document.getElementById('loadingBar').classList.toggle('visible', show);
     }
 
+    function getDurationLabel() {
+      if (selectedDuration === 'unlimited') return 'Ilimitado';
+      if (!selectedDuration) return 'Obligatorio';
+      return Math.floor(selectedDuration / 60) + ' min';
+    }
+
+    function getElapsedSeconds() {
+      if (!activeSound) return 0;
+      if (soundPaused || !soundStartedAt) return soundElapsedSeconds;
+      return soundElapsedSeconds + Math.max(0, Math.floor((Date.now() - soundStartedAt) / 1000));
+    }
+
+    function getRemainingSeconds(elapsed) {
+      if (!selectedDuration || selectedDuration === 'unlimited') return null;
+      return Math.max(0, selectedDuration - elapsed);
+    }
+
+    function updateSoundTimer() {
+      const elapsed = activeSound ? getElapsedSeconds() : 0;
+      const remaining = getRemainingSeconds(elapsed);
+      const elapsedEl = document.getElementById('elapsedDisplay');
+      const remainingEl = document.getElementById('remainingDisplay');
+      const progressEl = document.getElementById('soundProgress');
+      const hintEl = document.getElementById('timerHint');
+
+      elapsedEl.textContent = formatTime(elapsed);
+
+      if (!selectedDuration) {
+        remainingEl.textContent = '--:--';
+        progressEl.style.width = '0%';
+        hintEl.textContent = 'Selecciona una duración y activa un sonido';
+      } else if (selectedDuration === 'unlimited') {
+        remainingEl.textContent = '∞';
+        progressEl.style.width = activeSound ? '100%' : '0%';
+        hintEl.textContent = activeSound
+          ? (soundPaused ? 'Pausado sin límite' : 'Reproducción sin límite')
+          : 'Duración elegida: Ilimitado';
+      } else {
+        if (activeSound && remaining <= 0) {
+          stopSound();
+          return;
+        }
+        remainingEl.textContent = formatTime(activeSound ? remaining : selectedDuration);
+        progressEl.style.width = activeSound
+          ? ((elapsed / selectedDuration) * 100).toFixed(2) + '%'
+          : '0%';
+        hintEl.textContent = activeSound
+          ? (soundPaused ? 'Sonido en pausa' : 'El sonido se detendrá automáticamente')
+          : 'Duración elegida: ' + getDurationLabel();
+      }
+
+      updateStatusBar();
+    }
+
+    function startSoundTimer() {
+      clearInterval(soundTimerInterval);
+      soundPaused = false;
+      soundStartedAt = Date.now();
+      updateSoundTimer();
+      soundTimerInterval = setInterval(updateSoundTimer, 1000);
+    }
+
+    function stopSoundTimer() {
+      clearInterval(soundTimerInterval);
+      soundTimerInterval = null;
+      soundStartedAt = null;
+      soundElapsedSeconds = 0;
+      soundPaused = false;
+      updateSoundTimer();
+    }
+
+    function pauseSound() {
+      if (!currentAudio || soundPaused) return;
+      currentAudio.pause();
+      soundElapsedSeconds = getElapsedSeconds();
+      soundStartedAt = null;
+      soundPaused = true;
+      clearInterval(soundTimerInterval);
+      soundTimerInterval = null;
+      updateSoundCardStates();
+      updateSoundTimer();
+      updateGuide();
+    }
+
+    function resumeSound() {
+      if (!currentAudio || !soundPaused) return;
+      currentAudio.play()
+        .then(() => {
+          startSoundTimer();
+          updateSoundCardStates();
+          updateGuide();
+          updateStatusBar();
+        })
+        .catch(() => {
+          soundPaused = true;
+        });
+    }
+
+    function setSoundDuration(value, btn) {
+      selectedDuration = value === 'unlimited' ? 'unlimited' : Number(value);
+      document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('durationNote').textContent = getDurationLabel();
+      if (activeSound && selectedDuration !== 'unlimited') {
+        const elapsed = getElapsedSeconds();
+        if (elapsed >= selectedDuration) {
+          stopSound();
+          return;
+        }
+      }
+      updateSoundTimer();
+      updateGuide();
+      updateStatusBar();
+    }
+
     function toggleSound(name) {
-      if (activeSound === name) { stopSound(); return; }
+      if (activeSound === name) {
+        if (soundPaused) {
+          resumeSound();
+        } else {
+          pauseSound();
+        }
+        return;
+      }
+      if (!selectedDuration) {
+        document.getElementById('flowTip').textContent = 'Antes del sonido, elige una duración en el bloque de tiempo';
+        return;
+      }
       stopSound();
       showLoading(true);
 
@@ -402,8 +685,14 @@
       audio.volume = volume;
 
       audio.addEventListener('canplaythrough', () => {
-        showLoading(false);
-        audio.play().catch(() => showLoading(false));
+        audio.play()
+          .then(() => {
+            showLoading(false);
+            startSoundTimer();
+            updateGuide();
+            updateStatusBar();
+          })
+          .catch(() => showLoading(false));
       }, { once: true });
 
       audio.addEventListener('error', () => {
@@ -414,10 +703,12 @@
       audio.load();
       currentAudio = audio;
       activeSound = name;
+      soundElapsedSeconds = 0;
+      soundPaused = false;
 
       document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('active'));
       document.querySelector(`[data-sound="${name}"]`).classList.add('active');
-      updateStatusBar();
+      updateSoundCardStates();
     }
 
     function stopSound() {
@@ -428,6 +719,9 @@
       }
       activeSound = null;
       document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('active'));
+      updateSoundCardStates();
+      stopSoundTimer();
+      updateGuide();
       updateStatusBar();
     }
 
@@ -440,13 +734,19 @@
     function updateStatusBar() {
       const dot = document.getElementById('statusDot');
       const text = document.getElementById('statusText');
-      const names = { rain: 'Lluvia', cafe: 'Café', forest: 'Bosque', noise: 'Brown noise' };
+      const names = { rain: 'Lluvia', cafe: 'Café', forest: 'Bosque', noise: 'White noise' };
       if (activeSound) {
+        const elapsed = getElapsedSeconds();
+        const remaining = getRemainingSeconds(elapsed);
         dot.classList.add('on');
-        text.textContent = names[activeSound] + ' activo';
+        if (selectedDuration === 'unlimited') {
+          text.textContent = names[activeSound] + (soundPaused ? ' en pausa · Ilimitado' : ' activo · Ilimitado');
+        } else {
+          text.textContent = names[activeSound] + (soundPaused ? ' en pausa · Restan ' : ' activo · Restan ') + formatTime(remaining);
+        }
       } else {
         dot.classList.remove('on');
-        text.textContent = 'Sin sonido activo';
+        text.textContent = selectedDuration ? 'Sin sonido activo · ' + getDurationLabel() : 'Sin sonido activo';
       }
     }
 
@@ -454,61 +754,10 @@
       return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
     }
 
-    function updateDisplay() {
-      document.getElementById('timerDisplay').textContent = formatTime(remaining);
-      document.getElementById('progressBar').style.width = ((remaining / totalSeconds) * 100) + '%';
-    }
-
-    function setMode(mode, btn) {
-      if (running) return;
-      currentMode = mode;
-      totalSeconds = MODES[mode].seconds;
-      remaining = totalSeconds;
-      document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      document.getElementById('modeLabel').textContent = MODES[mode].label;
-      updateDisplay();
-    }
-
-    function toggleTimer() {
-      if (running) {
-        clearInterval(interval); running = false;
-        document.getElementById('startBtn').textContent = 'Reanudar';
-      } else {
-        running = true;
-        document.getElementById('startBtn').textContent = 'Pausar';
-        interval = setInterval(() => {
-          remaining--;
-          updateDisplay();
-          if (remaining <= 0) {
-            clearInterval(interval); running = false;
-            document.getElementById('startBtn').textContent = 'Iniciar';
-            if (currentMode === 'focus') {
-              sessionsCompleted = Math.min(sessionsCompleted + 1, 4);
-              updateDots();
-            }
-            remaining = totalSeconds;
-            updateDisplay();
-          }
-        }, 1000);
-      }
-    }
-
-    function resetTimer() {
-      clearInterval(interval); running = false;
-      remaining = totalSeconds;
-      document.getElementById('startBtn').textContent = 'Iniciar';
-      updateDisplay();
-    }
-
-    function updateDots() {
-      for (let i = 0; i < 4; i++) {
-        document.getElementById('d' + i).classList.toggle('done', i < sessionsCompleted);
-      }
-      document.getElementById('sessionCount').textContent =
-        sessionsCompleted >= 4 ? 'Ciclo completo' : 'Sesión ' + (sessionsCompleted + 1) + ' de 4';
-      if (sessionsCompleted >= 4) sessionsCompleted = 0;
-    }
+    updateSoundTimer();
+    updateSoundCardStates();
+    updateGuide();
+    updateStatusBar();
   </script>
 </body>
 </html>
