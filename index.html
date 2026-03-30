@@ -634,11 +634,15 @@
       noise: { start: 0, end: 0 }
     };
 
+    const AUTO_TRIM_THRESHOLD = 0.0015;
+    const ZERO_CROSS_SEARCH_SECONDS = 0.05;
+
     let activeSound = null;
     let volume = 0.6;
     let audioContext = null;
     let currentPlayback = null;
     const soundBuffers = {};
+    const soundLoopBounds = {};
     let selectedDuration = null;
     let soundStartedAt = null;
     let soundElapsedSeconds = 0;
@@ -712,13 +716,83 @@
       return audioContext;
     }
 
-    function getLoopBounds(name, buffer) {
+    function findZeroCrossing(samples, target, direction, maxSearch) {
+      const start = Math.max(1, target);
+      for (let i = 0; i <= maxSearch; i++) {
+        const idx = direction >= 0 ? start + i : start - i;
+        if (idx <= 1 || idx >= samples.length) continue;
+        const prev = samples[idx - 1];
+        const curr = samples[idx];
+        if ((prev <= 0 && curr >= 0) || (prev >= 0 && curr <= 0)) {
+          return idx;
+        }
+      }
+      return target;
+    }
+
+    function detectActiveSampleRange(buffer) {
+      const channelCount = buffer.numberOfChannels;
+      const length = buffer.length;
+      let firstActive = -1;
+      let lastActive = -1;
+
+      for (let i = 0; i < length; i++) {
+        let active = false;
+        for (let ch = 0; ch < channelCount; ch++) {
+          if (Math.abs(buffer.getChannelData(ch)[i]) > AUTO_TRIM_THRESHOLD) {
+            active = true;
+            break;
+          }
+        }
+        if (active) {
+          if (firstActive === -1) firstActive = i;
+          lastActive = i;
+        }
+      }
+
+      if (firstActive === -1 || lastActive === -1) {
+        return { firstActive: 0, lastActive: length - 1 };
+      }
+
+      const monoRef = buffer.getChannelData(0);
+      const zeroSearch = Math.floor(buffer.sampleRate * ZERO_CROSS_SEARCH_SECONDS);
+      const alignedStart = findZeroCrossing(monoRef, firstActive, 1, zeroSearch);
+      const alignedEnd = findZeroCrossing(monoRef, lastActive, -1, zeroSearch);
+
+      return {
+        firstActive: Math.max(0, alignedStart),
+        lastActive: Math.max(alignedStart + 1, alignedEnd)
+      };
+    }
+
+    function computeLoopBounds(name, buffer) {
       const trim = LOOP_TRIM_SECONDS[name] || { start: 0, end: 0 };
-      const start = Math.min(Math.max(trim.start || 0, 0), Math.max(buffer.duration - 0.01, 0));
-      const endTrim = Math.max(trim.end || 0, 0);
-      const rawEnd = Math.max(start + 0.01, buffer.duration - endTrim);
-      const end = Math.min(rawEnd, buffer.duration);
-      return { start, end, length: Math.max(0.01, end - start) };
+      const manualStart = Math.max(trim.start || 0, 0);
+      const manualEnd = Math.max(trim.end || 0, 0);
+
+      const autoRange = detectActiveSampleRange(buffer);
+      const autoStart = autoRange.firstActive / buffer.sampleRate;
+      const autoEnd = autoRange.lastActive / buffer.sampleRate;
+
+      const start = Math.max(manualStart, autoStart);
+      const end = Math.min(buffer.duration - manualEnd, autoEnd);
+
+      if (end - start < 0.1) {
+        return {
+          start: Math.min(Math.max(manualStart, 0), Math.max(buffer.duration - 0.1, 0)),
+          end: Math.max(0.1, buffer.duration - manualEnd),
+          length: Math.max(0.1, buffer.duration - manualStart - manualEnd)
+        };
+      }
+
+      return { start, end, length: end - start };
+    }
+
+    function getLoopBounds(name, buffer) {
+      if (!soundLoopBounds[name]) {
+        soundLoopBounds[name] = computeLoopBounds(name, buffer);
+      }
+      return soundLoopBounds[name];
     }
 
     async function loadSoundBuffer(name) {
@@ -731,6 +805,7 @@
       const arrayBuffer = await response.arrayBuffer();
       const decoded = await ctx.decodeAudioData(arrayBuffer);
       soundBuffers[name] = decoded;
+      soundLoopBounds[name] = computeLoopBounds(name, decoded);
       return decoded;
     }
 
