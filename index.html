@@ -145,6 +145,21 @@
       cursor: not-allowed;
     }
 
+    .pro-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: 6px;
+      padding: 2px 6px;
+      font-size: 8px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: 999px;
+      border: 0.5px solid var(--border2);
+      color: var(--text2);
+      vertical-align: middle;
+    }
+
     .sound-indicator {
       position: absolute;
       top: 10px; right: 10px;
@@ -250,6 +265,11 @@
       background: var(--bg);
       border-color: var(--border2);
       color: var(--text);
+    }
+
+    .duration-btn.locked {
+      opacity: 0.45;
+      cursor: not-allowed;
     }
 
     @media (max-width: 420px) {
@@ -396,6 +416,90 @@
       animation: loading 1.2s ease-in-out infinite alternate;
     }
 
+    .paywall {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 10, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      z-index: 50;
+    }
+
+    .paywall.open {
+      display: flex;
+    }
+
+    .paywall-card {
+      width: 100%;
+      max-width: 420px;
+      background: var(--bg);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+    }
+
+    .paywall-title {
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.45rem;
+      color: var(--text);
+    }
+
+    .paywall-text {
+      font-size: 10px;
+      color: var(--text2);
+      line-height: 1.45;
+      margin-bottom: 0.8rem;
+    }
+
+    .paywall-input {
+      width: 100%;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius-md);
+      background: var(--bg2);
+      color: var(--text);
+      padding: 10px 12px;
+      margin-bottom: 0.7rem;
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+    }
+
+    .paywall-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 0.55rem;
+    }
+
+    .paywall-btn {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border-radius: var(--radius-md);
+      border: 0.5px solid var(--border2);
+      padding: 8px 10px;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .paywall-btn.primary {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+
+    .paywall-msg {
+      min-height: 14px;
+      font-size: 10px;
+      color: var(--text2);
+    }
+
     @keyframes loading {
       from { width: 20%; }
       to { width: 90%; }
@@ -419,13 +523,13 @@
     <div class="duration-row">
       <div class="duration-head">
         <span class="duration-label">Tiempo de sonido</span>
-        <span class="duration-note" id="durationNote">Obligatorio</span>
+        <span class="duration-note" id="durationNote">3 min (Free)</span>
       </div>
       <div class="duration-options">
-        <button class="duration-btn" onclick="setSoundDuration('180', this)">3 min</button>
-        <button class="duration-btn" onclick="setSoundDuration('600', this)">10 min</button>
-        <button class="duration-btn" onclick="setSoundDuration('1800', this)">30 min</button>
-        <button class="duration-btn" onclick="setSoundDuration('unlimited', this)">Ilimitado</button>
+        <button class="duration-btn" data-duration="180" onclick="handleDurationClick('180', this)">3 min</button>
+        <button class="duration-btn" data-duration="600" data-premium="true" onclick="handleDurationClick('600', this)">10 min <span class="pro-badge">Pro</span></button>
+        <button class="duration-btn" data-duration="1800" data-premium="true" onclick="handleDurationClick('1800', this)">30 min <span class="pro-badge">Pro</span></button>
+        <button class="duration-btn" data-duration="unlimited" data-premium="true" onclick="handleDurationClick('unlimited', this)">Ilimitado <span class="pro-badge">Pro</span></button>
       </div>
     </div>
 
@@ -450,29 +554,29 @@
     <div class="section-label">Ambiente</div>
     <div class="loading-bar" id="loadingBar"><div class="loading-fill"></div></div>
     <div class="sounds-grid">
-      <div class="sound-card" data-sound="rain" onclick="toggleSound('rain')">
+      <div class="sound-card" data-sound="rain" onclick="handleSoundClick('rain')">
         <span class="sound-indicator"></span>
         <span class="sound-icon"><span class="sound-glyph">🌧</span><span class="sound-state">▶</span></span>
         <span class="sound-name">Lluvia</span>
         <span class="sound-desc">Lluvia suave sobre ventana</span>
       </div>
-      <div class="sound-card" data-sound="cafe" onclick="toggleSound('cafe')">
-        <span class="sound-indicator"></span>
-        <span class="sound-icon"><span class="sound-glyph">☕</span><span class="sound-state">▶</span></span>
-        <span class="sound-name">Café</span>
-        <span class="sound-desc">Murmullo de cafetería</span>
-      </div>
-      <div class="sound-card" data-sound="forest" onclick="toggleSound('forest')">
-        <span class="sound-indicator"></span>
-        <span class="sound-icon"><span class="sound-glyph">🌿</span><span class="sound-state">▶</span></span>
-        <span class="sound-name">Bosque</span>
-        <span class="sound-desc">Pájaros y brisa natural</span>
-      </div>
-      <div class="sound-card" data-sound="noise" onclick="toggleSound('noise')">
+      <div class="sound-card" data-sound="noise" onclick="handleSoundClick('noise')">
         <span class="sound-indicator"></span>
         <span class="sound-icon"><span class="sound-glyph">〰</span><span class="sound-state">▶</span></span>
         <span class="sound-name">White noise</span>
         <span class="sound-desc">Ruido profundo constante</span>
+      </div>
+      <div class="sound-card" data-sound="cafe" data-premium="true" onclick="handleSoundClick('cafe')">
+        <span class="sound-indicator"></span>
+        <span class="sound-icon"><span class="sound-glyph">☕</span><span class="sound-state">▶</span></span>
+        <span class="sound-name">Café <span class="pro-badge">Pro</span></span>
+        <span class="sound-desc">Murmullo de cafetería</span>
+      </div>
+      <div class="sound-card" data-sound="forest" data-premium="true" onclick="handleSoundClick('forest')">
+        <span class="sound-indicator"></span>
+        <span class="sound-icon"><span class="sound-glyph">🌿</span><span class="sound-state">▶</span></span>
+        <span class="sound-name">Bosque <span class="pro-badge">Pro</span></span>
+        <span class="sound-desc">Pájaros y brisa natural</span>
       </div>
     </div>
 
@@ -490,7 +594,24 @@
     </div>
   </div>
 
+  <div class="paywall" id="paywallModal" aria-hidden="true">
+    <div class="paywall-card">
+      <div class="paywall-title">Desbloquea Focus &amp; Flow Pro</div>
+      <div class="paywall-text" id="paywallReason">Esta opción es parte de la versión Pro.</div>
+      <input class="paywall-input" id="passInput" type="text" placeholder="Ingresa tu pass Pro" />
+      <div class="paywall-actions">
+        <button class="paywall-btn primary" onclick="applyPass()">Activar pass</button>
+        <a class="paywall-btn" id="buyProLink" href="https://gumroad.com" target="_blank" rel="noreferrer">Comprar Pro</a>
+        <button class="paywall-btn" onclick="closePaywall()">Cerrar</button>
+      </div>
+      <div class="paywall-msg" id="paywallMsg">Al pagar recibirás tu pass para desbloquear sonidos y tiempos Pro.</div>
+    </div>
+  </div>
+
   <script>
+    const PRO_PASSES = ['FOCUSFLOW-PRO'];
+    const PRO_STORAGE_KEY = 'focusflow_pro_unlocked';
+
     const SOUND_FILES = {
       rain:   'sounds/rain.mp3',
       cafe:   'sounds/cafe.mp3',
@@ -498,14 +619,164 @@
       noise:  'sounds/noise.mp3'
     };
 
+    const LOOP_TRIM_SECONDS = {
+      rain: { start: 0, end: 0 },
+      cafe: { start: 0, end: 0 },
+      forest: { start: 0, end: 0 },
+      noise: { start: 0, end: 0 }
+    };
+
     let activeSound = null;
     let volume = 0.6;
-    let currentAudio = null;
+    let audioContext = null;
+    let currentPlayback = null;
+    const soundBuffers = {};
     let selectedDuration = null;
     let soundStartedAt = null;
     let soundElapsedSeconds = 0;
     let soundPaused = false;
     let soundTimerInterval = null;
+    let proUnlocked = localStorage.getItem(PRO_STORAGE_KEY) === '1';
+    let pendingUnlockAction = null;
+
+    function isPremiumSound(name) {
+      return name === 'cafe' || name === 'forest';
+    }
+
+    function isPremiumDuration(value) {
+      return value !== '180';
+    }
+
+    function openPaywall(reasonText, action) {
+      pendingUnlockAction = action || null;
+      document.getElementById('paywallReason').textContent = reasonText;
+      document.getElementById('paywallMsg').textContent = 'Al pagar recibiras tu pass para desbloquear sonidos y tiempos Pro.';
+      document.getElementById('passInput').value = '';
+      document.getElementById('paywallModal').classList.add('open');
+      document.getElementById('paywallModal').setAttribute('aria-hidden', 'false');
+    }
+
+    function closePaywall(clearPending = true) {
+      if (clearPending) pendingUnlockAction = null;
+      document.getElementById('paywallModal').classList.remove('open');
+      document.getElementById('paywallModal').setAttribute('aria-hidden', 'true');
+    }
+
+    function applyPass() {
+      const raw = document.getElementById('passInput').value || '';
+      const normalized = raw.trim().toUpperCase();
+      if (!PRO_PASSES.includes(normalized)) {
+        document.getElementById('paywallMsg').textContent = 'Pass invalida. Verifica el codigo recibido luego del pago.';
+        return;
+      }
+
+      proUnlocked = true;
+      localStorage.setItem(PRO_STORAGE_KEY, '1');
+      document.getElementById('paywallMsg').textContent = 'Pro activado correctamente.';
+      closePaywall(false);
+      updatePremiumLocks();
+      updateGuide();
+
+      if (pendingUnlockAction) {
+        const action = pendingUnlockAction;
+        pendingUnlockAction = null;
+        if (action.type === 'sound') {
+          toggleSound(action.value);
+        } else if (action.type === 'duration') {
+          setSoundDuration(action.value, action.buttonEl);
+        }
+      }
+    }
+
+    function updatePremiumLocks() {
+      document.querySelectorAll('.sound-card[data-premium="true"]').forEach(card => {
+        card.classList.toggle('locked', !proUnlocked);
+      });
+      document.querySelectorAll('.duration-btn[data-premium="true"]').forEach(btn => {
+        btn.classList.toggle('locked', !proUnlocked);
+      });
+    }
+
+    function getAudioContext() {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return audioContext;
+    }
+
+    function getLoopBounds(name, buffer) {
+      const trim = LOOP_TRIM_SECONDS[name] || { start: 0, end: 0 };
+      const start = Math.min(Math.max(trim.start || 0, 0), Math.max(buffer.duration - 0.01, 0));
+      const endTrim = Math.max(trim.end || 0, 0);
+      const rawEnd = Math.max(start + 0.01, buffer.duration - endTrim);
+      const end = Math.min(rawEnd, buffer.duration);
+      return { start, end, length: Math.max(0.01, end - start) };
+    }
+
+    async function loadSoundBuffer(name) {
+      if (soundBuffers[name]) return soundBuffers[name];
+      const ctx = getAudioContext();
+      const response = await fetch(SOUND_FILES[name]);
+      if (!response.ok) {
+        throw new Error('No se pudo descargar el audio');
+      }
+      const arrayBuffer = await response.arrayBuffer();
+      const decoded = await ctx.decodeAudioData(arrayBuffer);
+      soundBuffers[name] = decoded;
+      return decoded;
+    }
+
+    function getPlaybackOffsetSeconds() {
+      if (!currentPlayback) return 0;
+      const ctx = getAudioContext();
+      const liveDelta = soundPaused ? 0 : Math.max(0, ctx.currentTime - currentPlayback.startedAtCtx);
+      return (currentPlayback.offsetSeconds + liveDelta) % currentPlayback.loopLength;
+    }
+
+    function createPlayback(name, buffer, offsetSeconds) {
+      const ctx = getAudioContext();
+      const bounds = getLoopBounds(name, buffer);
+      const gainNode = ctx.createGain();
+      gainNode.gain.value = volume;
+      gainNode.connect(ctx.destination);
+
+      const source = ctx.createBufferSource();
+      source.buffer = buffer;
+      source.loop = true;
+      source.loopStart = bounds.start;
+      source.loopEnd = bounds.end;
+      source.connect(gainNode);
+
+      const normalizedOffset = bounds.start + (((offsetSeconds % bounds.length) + bounds.length) % bounds.length);
+      source.start(0, normalizedOffset);
+
+      currentPlayback = {
+        name,
+        buffer,
+        source,
+        gainNode,
+        startedAtCtx: ctx.currentTime,
+        offsetSeconds: normalizedOffset - bounds.start,
+        loopLength: bounds.length
+      };
+    }
+
+    function destroyPlayback() {
+      if (!currentPlayback) return;
+      try {
+        currentPlayback.source.stop(0);
+      } catch (error) {
+      }
+      try {
+        currentPlayback.source.disconnect();
+      } catch (error) {
+      }
+      try {
+        currentPlayback.gainNode.disconnect();
+      } catch (error) {
+      }
+      currentPlayback = null;
+    }
 
     function updateSoundCardStates() {
       document.querySelectorAll('.sound-card').forEach(card => {
@@ -530,12 +801,10 @@
       stepSound.classList.toggle('done', soundDone);
       stepVolume.classList.toggle('done', soundDone);
 
-      document.querySelectorAll('.sound-card').forEach(card => {
-        card.classList.toggle('locked', !durationDone);
-      });
-
       if (!durationDone) {
-        flowTip.textContent = 'Empieza por seleccionar 3 min, 10 min, 30 min o Ilimitado';
+        flowTip.textContent = proUnlocked
+          ? 'Empieza por seleccionar una duracion y luego un sonido'
+          : 'Version Free: 3 min + lluvia/white noise. Usa pass Pro para desbloquear todo';
       } else if (!soundDone) {
         flowTip.textContent = 'Ahora toca un sonido para comenzar la reproducción';
       } else if (soundPaused) {
@@ -621,9 +890,17 @@
     }
 
     function pauseSound() {
-      if (!currentAudio || soundPaused) return;
-      currentAudio.pause();
+      if (!currentPlayback || soundPaused) return;
       soundElapsedSeconds = getElapsedSeconds();
+      currentPlayback.offsetSeconds = getPlaybackOffsetSeconds();
+      try {
+        currentPlayback.source.stop(0);
+      } catch (error) {
+      }
+      try {
+        currentPlayback.source.disconnect();
+      } catch (error) {
+      }
       soundStartedAt = null;
       soundPaused = true;
       clearInterval(soundTimerInterval);
@@ -634,9 +911,12 @@
     }
 
     function resumeSound() {
-      if (!currentAudio || !soundPaused) return;
-      currentAudio.play()
+      if (!currentPlayback || !soundPaused) return;
+      const ctx = getAudioContext();
+      ctx.resume()
         .then(() => {
+          const playback = currentPlayback;
+          createPlayback(playback.name, playback.buffer, playback.offsetSeconds);
           startSoundTimer();
           updateSoundCardStates();
           updateGuide();
@@ -664,6 +944,30 @@
       updateStatusBar();
     }
 
+    function handleDurationClick(value, btn) {
+      if (!proUnlocked && isPremiumDuration(value)) {
+        openPaywall('El tiempo ' + (value === 'unlimited' ? 'Ilimitado' : Math.floor(Number(value) / 60) + ' min') + ' es una opcion Pro.', {
+          type: 'duration',
+          value,
+          buttonEl: btn
+        });
+        return;
+      }
+      setSoundDuration(value, btn);
+    }
+
+    function handleSoundClick(name) {
+      if (!proUnlocked && isPremiumSound(name)) {
+        const soundName = name === 'cafe' ? 'Cafe' : 'Bosque';
+        openPaywall('El sonido ' + soundName + ' es parte de la version Pro.', {
+          type: 'sound',
+          value: name
+        });
+        return;
+      }
+      toggleSound(name);
+    }
+
     function toggleSound(name) {
       if (activeSound === name) {
         if (soundPaused) {
@@ -673,50 +977,36 @@
         }
         return;
       }
-      if (!selectedDuration) {
-        document.getElementById('flowTip').textContent = 'Antes del sonido, elige una duración en el bloque de tiempo';
-        return;
-      }
       stopSound();
       showLoading(true);
 
-      const audio = new Audio(SOUND_FILES[name]);
-      audio.loop = true;
-      audio.volume = volume;
+      const ctx = getAudioContext();
+      ctx.resume()
+        .then(() => loadSoundBuffer(name))
+        .then(buffer => {
+          createPlayback(name, buffer, 0);
+          activeSound = name;
+          soundElapsedSeconds = 0;
+          soundPaused = false;
 
-      audio.addEventListener('canplaythrough', () => {
-        audio.play()
-          .then(() => {
-            showLoading(false);
-            startSoundTimer();
-            updateGuide();
-            updateStatusBar();
-          })
-          .catch(() => showLoading(false));
-      }, { once: true });
+          document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('active'));
+          document.querySelector(`[data-sound="${name}"]`).classList.add('active');
 
-      audio.addEventListener('error', () => {
-        showLoading(false);
-        alert('No se pudo cargar el sonido. Verifica que el archivo existe en sounds/' + name + '.mp3');
-      }, { once: true });
+          startSoundTimer();
+          updateSoundCardStates();
+          updateGuide();
+          updateStatusBar();
+          showLoading(false);
+        })
+        .catch(() => {
+          showLoading(false);
+          alert('No se pudo cargar el sonido. Verifica que el archivo existe en sounds/' + name + '.mp3');
+        });
 
-      audio.load();
-      currentAudio = audio;
-      activeSound = name;
-      soundElapsedSeconds = 0;
-      soundPaused = false;
-
-      document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('active'));
-      document.querySelector(`[data-sound="${name}"]`).classList.add('active');
-      updateSoundCardStates();
     }
 
     function stopSound() {
-      if (currentAudio) {
-        currentAudio.pause();
-        currentAudio.currentTime = 0;
-        currentAudio = null;
-      }
+      destroyPlayback();
       activeSound = null;
       document.querySelectorAll('.sound-card').forEach(c => c.classList.remove('active'));
       updateSoundCardStates();
@@ -728,7 +1018,7 @@
     function setVolume(val) {
       volume = val / 100;
       document.getElementById('volVal').textContent = val;
-      if (currentAudio) currentAudio.volume = volume;
+      if (currentPlayback) currentPlayback.gainNode.gain.value = volume;
     }
 
     function updateStatusBar() {
@@ -754,6 +1044,11 @@
       return String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
     }
 
+    selectedDuration = 180;
+    const freeDurationBtn = document.querySelector('.duration-btn[data-duration="180"]');
+    if (freeDurationBtn) freeDurationBtn.classList.add('active');
+    document.getElementById('durationNote').textContent = getDurationLabel() + (proUnlocked ? '' : ' (Free)');
+    updatePremiumLocks();
     updateSoundTimer();
     updateSoundCardStates();
     updateGuide();
