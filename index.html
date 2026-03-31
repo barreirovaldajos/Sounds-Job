@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Focus and Flow — Sonidos ambiente</title>
   <meta name="description" content="Sonidos de ambiente con temporizador de reproducción configurable. Lluvia, café, bosque y brown noise." />
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Fraunces:ital,opsz,wght@0,9..144,300;1,9..144,300&display=swap" rel="stylesheet" />
@@ -590,7 +594,7 @@
       <input class="paywall-input" id="passInput" type="text" placeholder="Ingresa tu pass Pro" />
       <div class="paywall-actions">
         <button class="paywall-btn primary" onclick="applyPass()">Activar pass</button>
-        <a class="paywall-btn" id="buyProLink" href="https://celticjourney.gumroad.com/l/jndfe" target="_blank" rel="noreferrer">Comprar Pro</a>
+        <a class="paywall-btn" id="buyProLink" href="buy-pro.html">Comprar Pro</a>
         <button class="paywall-btn" onclick="closePaywall()">Cerrar</button>
       </div>
       <div class="paywall-msg" id="paywallMsg">Al pagar recibirás tu pass para desbloquear sonidos y tiempos Pro.</div>
@@ -608,6 +612,21 @@
       'FOCUSFLOW-PRO-4N6W'
     ];
     const PRO_STORAGE_KEY = 'focusflow_pro_unlocked';
+    const ATTRIBUTION_STORAGE_KEY = 'focusflow_attribution';
+    const TRACKING_PAGES = {
+      sound_rain: '/track/sound-rain.html',
+      sound_noise: '/track/sound-noise.html',
+      sound_cafe: '/track/sound-cafe.html',
+      sound_forest: '/track/sound-forest.html',
+      duration_180: '/track/duration-3m.html',
+      duration_600: '/track/duration-10m.html',
+      duration_1800: '/track/duration-30m.html',
+      duration_unlimited: '/track/duration-unlimited.html',
+      premium_sound_blocked: '/track/premium-sound-blocked.html',
+      premium_duration_blocked: '/track/premium-duration-blocked.html',
+      pass_valid: '/track/pass-valid.html',
+      pass_invalid: '/track/pass-invalid.html'
+    };
 
     const SOUND_FILES = {
       rain:   'sounds/rain.mp3',
@@ -642,6 +661,68 @@
     let proUnlocked = localStorage.getItem(PRO_STORAGE_KEY) === '1';
     let pendingUnlockAction = null;
 
+    function captureAttribution() {
+      const params = new URLSearchParams(window.location.search);
+      const nextAttribution = {
+        utm_source: params.get('utm_source') || '',
+        utm_medium: params.get('utm_medium') || '',
+        utm_campaign: params.get('utm_campaign') || '',
+        utm_content: params.get('utm_content') || ''
+      };
+
+      const hasAny = Object.values(nextAttribution).some(Boolean);
+      if (hasAny) {
+        localStorage.setItem(ATTRIBUTION_STORAGE_KEY, JSON.stringify(nextAttribution));
+      }
+    }
+
+    function getAttribution() {
+      try {
+        return JSON.parse(localStorage.getItem(ATTRIBUTION_STORAGE_KEY) || '{}');
+      } catch (error) {
+        return {};
+      }
+    }
+
+    function buildCheckoutUrl() {
+      const baseUrl = new URL('buy-pro.html', window.location.href);
+      const attribution = getAttribution();
+
+      Object.entries(attribution).forEach(([key, value]) => {
+        if (value) {
+          baseUrl.searchParams.set(key, value);
+        }
+      });
+
+      return baseUrl.toString();
+    }
+
+    function trackAction(pageKey) {
+      const path = TRACKING_PAGES[pageKey];
+      if (!path) return;
+
+      const iframe = document.createElement('iframe');
+      iframe.src = path + '?t=' + Date.now();
+      iframe.width = '1';
+      iframe.height = '1';
+      iframe.style.position = 'absolute';
+      iframe.style.opacity = '0';
+      iframe.style.pointerEvents = 'none';
+      iframe.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(iframe);
+
+      setTimeout(() => {
+        iframe.remove();
+      }, 4000);
+    }
+
+    function refreshCheckoutLink() {
+      const buyLink = document.getElementById('buyProLink');
+      if (buyLink) {
+        buyLink.href = buildCheckoutUrl();
+      }
+    }
+
     function isPremiumSound(name) {
       return name === 'cafe' || name === 'forest';
     }
@@ -669,10 +750,12 @@
       const raw = document.getElementById('passInput').value || '';
       const normalized = raw.trim().toUpperCase();
       if (!PRO_PASSES.includes(normalized)) {
+        trackAction('pass_invalid');
         document.getElementById('paywallMsg').textContent = 'Pass invalida. Verifica el codigo recibido luego del pago.';
         return;
       }
 
+      trackAction('pass_valid');
       proUnlocked = true;
       localStorage.setItem(PRO_STORAGE_KEY, '1');
       document.getElementById('paywallMsg').textContent = 'Pro activado correctamente.';
@@ -1034,6 +1117,7 @@
 
     function handleDurationClick(value, btn) {
       if (!proUnlocked && isPremiumDuration(value)) {
+        trackAction('premium_duration_blocked');
         openPaywall('El tiempo ' + (value === 'unlimited' ? 'Ilimitado' : Math.floor(Number(value) / 60) + ' min') + ' es una opcion Pro.', {
           type: 'duration',
           value,
@@ -1041,11 +1125,14 @@
         });
         return;
       }
+
+      trackAction('duration_' + value);
       setSoundDuration(value, btn);
     }
 
     function handleSoundClick(name) {
       if (!proUnlocked && isPremiumSound(name)) {
+        trackAction('premium_sound_blocked');
         const soundName = name === 'cafe' ? 'Cafe' : 'Bosque';
         openPaywall('El sonido ' + soundName + ' es parte de la version Pro.', {
           type: 'sound',
@@ -1053,6 +1140,8 @@
         });
         return;
       }
+
+      trackAction('sound_' + name);
       toggleSound(name);
     }
 
@@ -1133,9 +1222,11 @@
     }
 
     selectedDuration = 180;
+    captureAttribution();
     const freeDurationBtn = document.querySelector('.duration-btn[data-duration="180"]');
     if (freeDurationBtn) freeDurationBtn.classList.add('active');
     document.getElementById('durationNote').textContent = getDurationLabel() + (proUnlocked ? '' : ' (Free)');
+    refreshCheckoutLink();
     updatePremiumLocks();
     updateSoundTimer();
     updateSoundCardStates();

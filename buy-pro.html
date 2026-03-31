@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex,nofollow" />
+  <title>Redirigiendo a compra</title>
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+  <p>Redirigiendo a Gumroad...</p>
+  <script>
+    const gumroadUrl = new URL('https://celticjourney.gumroad.com/l/jndfe');
+    const params = new URLSearchParams(window.location.search);
+    ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'].forEach((key) => {
+      const value = params.get(key);
+      if (value) gumroadUrl.searchParams.set(key, value);
+    });
+    setTimeout(() => {
+      window.location.replace(gumroadUrl.toString());
+    }, 350);
+  </script>
+</body>
+</html>
